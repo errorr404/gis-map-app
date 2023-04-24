@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import MapView, { Circle, Marker, Polygon } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Button, StyleSheet, View } from 'react-native';
+import Comment from './Components/comment';
 
 const TYPE = {
   MARKER:"MARKER",
@@ -58,10 +59,11 @@ export default function App() {
   })
 
   const [logLatArr,setFinalLatLog] = useState([]);
+  const [openModal,setOpenModal] = useState(false);
+  const [currentSelectedId,setCurrentSelectedId] = useState('')
 
   const userLocation =  async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
-    console.log("status-->",status)
     if(status !== 'granted') {
       console.log("error, permission denied")
     }
@@ -107,6 +109,16 @@ export default function App() {
     setFinalLatLog(finalRes)
   },[region]);
 
+  const handleMarketPress = (id) => {
+    setCurrentSelectedId(id)
+    setOpenModal(openModal => !openModal)
+  }
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setCurrentSelectedId(undefined)
+  }
+
 
   const getRenderer = useCallback((el) => {
     const {type, longitude, latitude,id} = el;
@@ -117,7 +129,7 @@ export default function App() {
         return   <Marker
         //  image={{uri:"https://i.ibb.co/GpqVX6h/street-light.png"}} 
         //   style={{width: 10, height: 10,}}
-           key={id} onPress={() => alert("clicked marker")} coordinate={tempLocation} title="marker" />;
+           key={id} onPress={() => handleMarketPress(id)} coordinate={tempLocation} title="marker" />;
       case TYPE.CIRCLE:
         // return <Circle key={id} center={tempLocation} radius={10000} fillColor="#6F5BDC" strokeColor="#000"/>;
       // case TYPE.POLYGON: 
@@ -126,6 +138,7 @@ export default function App() {
   },[region]);
   return (
     <View style={styles.container} >
+     {openModal && <Comment open={openModal} onCloseModal={handleCloseModal} id={currentSelectedId} />}
       <MapView style={styles.map} region={region}>
         {
           elementsType.map((el) =>getRenderer(el))
